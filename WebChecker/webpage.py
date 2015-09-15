@@ -1,5 +1,6 @@
 __author__ = 'marczis'
 
+import cPickle
 
 class WebPage:
     OFFLINE = 0
@@ -16,6 +17,9 @@ class WebPage:
     def doCheck(self):
         print "Checked: %s" % self.url
         self.status = WebPage.ONLINE
+
+    def sendMe(self, sock):
+        sock.send(cPickle.dumps(self) + ";")
 
 #Some notes: cPickle.dump(obj, file); cPickle.load(file)
 #

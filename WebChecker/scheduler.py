@@ -16,7 +16,7 @@ class SchedulerHandler(asyncore.dispatcher_with_send):
         #TODO Push first task from here.
         # REMOVE: Only for testing
         x = webpage.WebPage()
-        self.send(cPickle.dumps(x) + ";")
+        x.sendMe(self)
 
     def handle_read(self):
         self.data += self.recv(8192) # TODO make it config parameter
@@ -39,7 +39,7 @@ class Scheduler(asyncore.dispatcher):
     def __init__(self):
         asyncore.dispatcher.__init__(self)
         signal.signal(signal.SIGALRM, self.handleTimer)
-        self.period = 5 #TODO config
+        self.period = 2 #TODO config
         signal.alarm(self.period)
         self.create_socket(socket.AF_INET, socket.SOCK_STREAM)
         self.set_reuse_addr()
@@ -70,9 +70,11 @@ class Scheduler(asyncore.dispatcher):
     def handleTimer(self, signum, frame):
         print "Time to schedule."
         #TODO remove just for testing
+
         x = webpage.WebPage()
         for z in self.wpc:
             x.url="%s" % z
-            z.send(cPickle.dumps(x) + ";")
+            x.sendMe(z)
             print "sent for: %s" % (z)
+
         signal.alarm(self.period)
