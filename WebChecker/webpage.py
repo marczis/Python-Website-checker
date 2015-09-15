@@ -14,7 +14,7 @@ class WebPage:
         self.filename = ""
 
     def doCheck(self):
-        print "Checked."
+        print "Checked: %s" % self.url
         self.status = WebPage.ONLINE
 
 #Some notes: cPickle.dump(obj, file); cPickle.load(file)

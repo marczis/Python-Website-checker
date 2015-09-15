@@ -24,3 +24,5 @@ class Worker:
             x = cPickle.loads(msg)
             x.doCheck()
             self.s.send(cPickle.dumps(x) + ";")
+
+            #TODO if socket dies
