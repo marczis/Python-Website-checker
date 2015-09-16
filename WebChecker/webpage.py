@@ -2,6 +2,10 @@ __author__ = 'marczis'
 
 import cPickle
 from Config import Config
+import httplib2
+import re
+import socket
+import time
 
 class WebPage:
     OFFLINE = 0
@@ -13,16 +17,37 @@ class WebPage:
         self.name = name
         self.url = url
         self.checkPeriod = period
-        self.criteria = criteria
+        self.criteria = re.compile(criteria, re.MULTILINE)
         self.timetillcheck = period
         self.status = WebPage.OFFLINE
-        self.loadtime = 0
+        self.loadtime = 0 # in ms
 
     def doCheck(self):
         #TODO real check should be here
-        print "Checked: %s" % self.name
-        self.status = WebPage.ONLINE
-        self.loadtime = self.id
+        print "Checking: %s" % self.name
+        try:
+            con = httplib2.Http()
+            start = time.time()
+            resp, cont = con.request(self.url)
+            self.loadtime = (time.time() - start) * 1000
+        except httplib2.ServerNotFoundError:
+            self.status = WebPage.OFFLINE
+            print "OFFLINE by not found"
+            return
+        except socket.error:
+            self.status = WebPage.OFFLINE
+            print "OFFLINE by socket error"
+            return
+
+        #print cont
+        if resp["status"] == "200":
+            self.status = WebPage.WRONG_ANSWER
+            if self.criteria.search(cont) or not self.criteria:
+                self.status = WebPage.ONLINE
+        else:
+            print "OFFLINE by status number: %s" % (resp["status"])
+            self.status = WebPage.OFFLINE
+
 
     def sendMe(self, sock):
         sock.send(cPickle.dumps(self) + ";")
@@ -46,10 +71,10 @@ class WebPage:
 
     def __str__(self):
         return """%s
-url:          %s
+url         : %s
 Check period: %s
 Criteria    : %s
 Status      : %s
-LoadTime    : %s
+LoadTime    : %.3f ms
 """ % (self.name, self.url, self.checkPeriod, self.criteria, self.status, self.loadtime)
 

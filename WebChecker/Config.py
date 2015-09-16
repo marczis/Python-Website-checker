@@ -49,7 +49,7 @@ class Config:
 
         name = "Test Site 1"
         self.config.add_section(name)
-        self.config.set(name, "url", "www.mysite.domain")
+        self.config.set(name, "url", "http://www.mysite.domain/")
         self.config.set(name, "check_period", "30")
         self.config.set(name, "criteria", "Pong")
         with open(CONFIGFILE, "w+") as x:
