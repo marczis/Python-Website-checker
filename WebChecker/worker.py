@@ -4,16 +4,17 @@ import socket
 import cPickle
 import time
 
+from Config import Config
+
 class Worker:
     def __init__(self):
-        self.scheduler = "localhost"
-        self.port = 2424 # TODO put them into config
+        self.scheduler = (Config.get("Networking", "listen_address"), Config.getint("Networking", "port"))
         self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        #self.s.settimeout(1) #TODO Config
+        self.s.settimeout(Config.getint("Networking", "timeout"))
 
     def doWork(self):
         data = ""
-        self.s.connect(("localhost", 2424)) # TODO Config
+        self.s.connect(self.scheduler)
         while [ 1 ]:
             newdata = self.s.recv(8192) # TODO Change to bigger number
             if not newdata:
@@ -21,11 +22,11 @@ class Worker:
                 self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 while [ 1 ]:
                     try:
-                        print "Try to reconnect..." #TODO why not reconnect ?
-                        self.s.connect(("localhost", 2424)) # TODO Config
+                        print "Try to reconnect..."
+                        self.s.connect(self.scheduler)
                         break
                     except:
-                        time.sleep(1) # TODO config
+                        time.sleep(Config.getint("Networking", "reconnect_delay"))
                 continue
 
             data += newdata

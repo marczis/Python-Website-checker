@@ -7,6 +7,7 @@ import signal
 import os
 
 import webpage
+from Config import Config
 
 class SchedulerHandler(asyncore.dispatcher_with_send):
     def __init__(self, parent, arg):
@@ -19,7 +20,7 @@ class SchedulerHandler(asyncore.dispatcher_with_send):
         x.sendMe(self)
 
     def handle_read(self):
-        self.data += self.recv(8192) # TODO make it config parameter
+        self.data += self.recv(Config.getint("Networking", "receiver_buffer_size"))
         eom = self.data.find(";")
         if eom == -1:
             return
@@ -39,11 +40,11 @@ class Scheduler(asyncore.dispatcher):
     def __init__(self):
         asyncore.dispatcher.__init__(self)
         signal.signal(signal.SIGALRM, self.handleTimer)
-        self.period = 2 #TODO config
+        self.period = Config.getint("Scheduler", "period")
         signal.alarm(self.period)
         self.create_socket(socket.AF_INET, socket.SOCK_STREAM)
         self.set_reuse_addr()
-        self.bind(("localhost", 2424)) # TODO CONFIG PARAMETER
+        self.bind((Config.get("Networking","listen_address"), Config.getint("Networking", "port")))
         self.listen(5) # TODO WHAT IS 5 ?
         self.wpc = [] # WebPageCheckers - so the workers registered to this scheduler
 
