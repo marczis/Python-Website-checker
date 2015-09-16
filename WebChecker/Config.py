@@ -25,9 +25,10 @@ class Config:
             pagesections.remove("Networking")
             pagesections.remove("Scheduler")
 
-            for name in  pagesections:
+            for id,name in  enumerate(pagesections):
                 self.sites.append(webpage.WebPage(
-                     name
+                     id
+                    ,name
                     ,self.config.get(name, "url")
                     ,self.config.getint(name, "check_period")
                     ,self.config.get(name, "criteria")
