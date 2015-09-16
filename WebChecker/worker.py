@@ -16,7 +16,11 @@ class Worker:
         data = ""
         self.s.connect(self.scheduler)
         while [ 1 ]:
-            newdata = self.s.recv(8192) # TODO Change to bigger number
+            try:
+                newdata = self.s.recv(8192) # TODO Change to bigger number
+            except socket.timeout as e:
+                continue
+
             if not newdata:
                 self.s.close()
                 self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)

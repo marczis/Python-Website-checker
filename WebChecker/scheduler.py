@@ -14,10 +14,6 @@ class SchedulerHandler(asyncore.dispatcher_with_send):
         asyncore.dispatcher_with_send.__init__(self, arg)
         self.parent = parent
         self.data = ""
-        #TODO Push first task from here.
-        # REMOVE: Only for testing
-        x = webpage.WebPage()
-        x.sendMe(self)
 
     def handle_read(self):
         self.data += self.recv(Config.getint("Networking", "receiver_buffer_size"))
@@ -47,14 +43,17 @@ class Scheduler(asyncore.dispatcher):
         self.bind((Config.get("Networking","listen_address"), Config.getint("Networking", "port")))
         self.listen(5) # TODO WHAT IS 5 ?
         self.wpc = [] # WebPageCheckers - so the workers registered to this scheduler
+        self.wpciter = iter(self.wpc)
 
     def unregisterClient(self, sock):
         print "Unregister: %s" % (sock)
-        self.wpc.remove(sock) #TODO should we have a lock here ?
+        self.wpc.remove(sock) #Should we have a lock here ?
+        self.wpciter = iter(self.wpc) #Not optimal, but client registration, should not happen too often
 
     def registerClient(self, sock):
         print "Register: %s" % (sock)
         self.wpc.append(sock)
+        self.wpciter = iter(self.wpc) #Same thoughts here.
     
     def handle_accept(self):
         pair = self.accept()
@@ -69,13 +68,22 @@ class Scheduler(asyncore.dispatcher):
         asyncore.loop() # TODO will this ever return ?
 
     def handleTimer(self, signum, frame):
-        print "Time to schedule."
-        #TODO remove just for testing
+        print "Scheduler tick"
 
-        x = webpage.WebPage()
-        for z in self.wpc:
-            x.url="%s" % z
-            x.sendMe(z)
-            print "sent for: %s" % (z)
+        if not self.wpc:
+            print "No workers connected. Skip iteration."
+            signal.alarm(self.period)
+            return
+
+        for site in Config.getsites():
+            if site.shouldSend(): #NOTE: You can call this once and ONLY ONCE, in every scheduler round
+                try:
+                    x = self.wpciter.next()
+                except StopIteration:
+                    self.wpciter = iter(self.wpc)
+                    x = self.wpciter.next()
+
+                site.sendMe(x)
+                print "Sent %s to %s" % (site.getName(), x)
 
         signal.alarm(self.period)
