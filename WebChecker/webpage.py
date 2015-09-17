@@ -1,7 +1,6 @@
 __author__ = 'marczis'
 
 import cPickle
-from Config import Config
 import httplib2
 import re
 import socket
@@ -49,9 +48,10 @@ class WebPage:
 
 
     def sendMe(self, sock):
-        sock.send(cPickle.dumps(self) + ";")
+        sock.send(cPickle.dumps(self) + "\000")
 
     def shouldSend(self):
+        from Config import Config
         self.timetillcheck-=Config.getint("Scheduler", "period")
         if self.timetillcheck <= 0:
             self.timetillcheck = self.checkPeriod
@@ -75,6 +75,16 @@ class WebPage:
         if self.status == WebPage.ONLINE:
             return "Online"
         raise "Bad developer. Use const for statuses and update getStatus member."
+
+    def getStatusColor(self):
+        #Only for webserver :)
+        if self.status == WebPage.OFFLINE:
+            return "#FF0000"
+        if self.status == WebPage.WRONG_ANSWER:
+            return "#FFFF00"
+        if self.status == WebPage.ONLINE:
+            return "#00FF00"
+        raise "Bad developer. Use const for statuses and update getStatusColor member."
 
     def getLoadTime(self):
         return self.loadtime

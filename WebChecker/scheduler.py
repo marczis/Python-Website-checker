@@ -6,7 +6,6 @@ import cPickle
 import signal
 import logging
 
-import webpage
 from Config import Config
 
 class SchedulerHandler(asyncore.dispatcher_with_send):
@@ -17,7 +16,7 @@ class SchedulerHandler(asyncore.dispatcher_with_send):
 
     def handle_read(self):
         self.data += self.recv(Config.getint("Networking", "receiver_buffer_size"))
-        eom = self.data.find(";")
+        eom = self.data.find("\000")
         if eom == -1:
             return
 
@@ -41,7 +40,7 @@ class Scheduler(asyncore.dispatcher):
         self.create_socket(socket.AF_INET, socket.SOCK_STREAM)
         self.set_reuse_addr()
         self.bind((Config.get("Networking","listen_address"), Config.getint("Networking", "port")))
-        self.listen(5) # TODO WHAT IS 5 ?
+        self.listen(5) # maximum number of queued connections
         self.wpc = [] # WebPageCheckers - so the workers registered to this scheduler
         self.wpciter = iter(self.wpc)
         self.remainingseconds = 0
@@ -75,9 +74,6 @@ class Scheduler(asyncore.dispatcher):
             # TODO use python logger here
             self.registerClient(sock)
             handler = SchedulerHandler(self, sock)
-
-    def handleConnections(self):
-        asyncore.loop() # TODO will this ever return ?
 
     def handleTimer(self, signum, frame):
         logging.debug("Scheduler tick")

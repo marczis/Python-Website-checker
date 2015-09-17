@@ -33,7 +33,8 @@ class Worker:
 
         while [ 1 ]:
             try:
-                newdata = self.s.recv(8192) # TODO Change to bigger number
+
+                newdata = self.s.recv(92) # TODO Change to bigger number
             except socket.timeout as e:
                 continue
 
@@ -41,15 +42,17 @@ class Worker:
                 self.s.close()
                 self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 self.connect()
+                data = ""
 
             data += newdata
-            eom = newdata.find(";")
+            eom = newdata.find("\000")
             if eom == -1:
                 continue
 
             msg = data[0:eom]
             data = data[eom+1:]
 
+            print msg
             x = cPickle.loads(msg)
             x.doCheck()
             x.sendMe(self.s)

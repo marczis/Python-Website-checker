@@ -3,7 +3,6 @@ __author__ = 'marczis'
 import ConfigParser
 import os.path
 import webpage
-
 CONFIGFILE="./config"
 
 class Config:
@@ -24,6 +23,7 @@ class Config:
             #pagesections.remove("General")
             pagesections.remove("Networking")
             pagesections.remove("Scheduler")
+            pagesections.remove("WebServer")
 
             for id,name in  enumerate(pagesections):
                 self.sites.append(webpage.WebPage(
@@ -55,6 +55,10 @@ class Config:
         self.config.set("Scheduler", "period", "2") #TODO Change to something
         self.config.set("Scheduler", "#Seconds between scheduler ticks, default should work well. Too low number may cause issues, but should be smaller than the smallest website checking period")
 
+        self.config.add_section("WebServer")
+        self.config.set("WebServer", "listen_address", "localhost")
+        self.config.set("WebServer", "port", "8080")
+
         name = "Test Site 1"
         self.config.add_section(name)
         self.config.set(name, "url", "http://www.mysite.domain/")
@@ -85,3 +89,45 @@ class Config:
         Config.createInstance()
         return Config.Config.sites
 
+    @staticmethod
+    def getWebContent():
+        res = ""
+        for i in Config.getsites():
+            res += """
+<!DOCTYPE html>
+<html>
+<head>
+  <title>WebChecker</title>
+  <style>
+table, th, td {
+    border: 1px solid black;
+    border-collapse: collapse;
+}
+  </style>
+</head>
+<body>
+<table border="0">
+    <tr>
+        <td bgcolor="%s">
+        <b>%s</b>
+        </td>
+    </tr>
+    <tr>
+        <td>URL</td>
+        <td>%s</td>
+    </tr>
+    <tr>
+        <td>Status</td>
+        <td>%s</td>
+    </tr>
+    <tr>
+        <td>Load Time</td>
+        <td>%.0f ms</td>
+    </tr>
+</table>
+<br>
+</body>
+</html>
+""" % (i.getStatusColor(), i.getName(), i.getURL(), i.getStatus(), i.getLoadTime())
+
+        return res

@@ -5,8 +5,11 @@ import argparse
 import sys
 import logging
 import socket
+import ConfigParser
+import asyncore
 
 import WebChecker.scheduler
+import WebChecker.webserver
 import WebChecker.worker
 from WebChecker.Config import Config
 
@@ -36,8 +39,9 @@ def main():
 
         if pargs.s:
             logging.info("Webchecker started as Scheduler")
-            server = WebChecker.scheduler.Scheduler()
-            server.handleConnections() #Async from here on
+            scheduler = WebChecker.scheduler.Scheduler()
+            webserver = WebChecker.webserver.WebServer()
+            asyncore.loop()
         else:
             logging.info("Webchecker started as Worker")
             client = WebChecker.worker.Worker()
@@ -57,6 +61,16 @@ Network problem. If you started the application in server mode, please check the
 plus if you have access rights on the system to open that port.
 If you started in client mode, please double check the server address and check if you have any
 blocking firewall or other entity in the way.
+
+Low level error message:
+%s
+""" % (e)
+
+    except ConfigParser.NoOptionError as e:
+        logging.error("Config error: %s" % (e))
+        print """
+Ooops. Looks like you have a problem in your config file. Please check it again. In worst case delete it, so I can
+regenerate a working one for you with default values.
 
 Low level error message:
 %s
