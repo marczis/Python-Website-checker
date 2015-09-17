@@ -26,6 +26,7 @@ class SchedulerHandler(asyncore.dispatcher_with_send):
 
         x = cPickle.loads(msg)
         Config.getsites()[x.getId()].setResult(x)
+        logging.info("%s: URL: %s Status: %s Loadtime: %.0f ms" % (x.getName(), x.getURL(), x.getStatus(), x.getLoadTime()))
 
     def handle_close(self):
         self.parent.unregisterClient(self.socket)
@@ -100,7 +101,6 @@ class Scheduler(asyncore.dispatcher):
                     x = self.wpciter.next()
 
                 site.sendMe(x)
-                print x.getpeername()
                 logging.debug("Sent \"%s\" to %s:%s" % (site.getName(), x.getpeername()[0], x.getpeername()[1]))
         signal.alarm(self.period)
 

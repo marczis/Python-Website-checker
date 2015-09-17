@@ -24,7 +24,6 @@ class WebPage:
         self.loadtime = 0 # in ms
 
     def doCheck(self):
-        #TODO real check should be here
         logging.debug("Checking: %s" % self.name)
         try:
             con = httplib2.Http()
@@ -64,6 +63,21 @@ class WebPage:
 
     def getId(self):
         return self.id
+
+    def getURL(self):
+        return self.url
+
+    def getStatus(self):
+        if self.status == WebPage.OFFLINE:
+            return "Offline"
+        if self.status == WebPage.WRONG_ANSWER:
+            return "Online, but failed on requirement"
+        if self.status == WebPage.ONLINE:
+            return "Online"
+        raise "Bad developer. Use const for statuses and update getStatus member."
+
+    def getLoadTime(self):
+        return self.loadtime
 
     def setResult(self, other):
         self.status = other.status

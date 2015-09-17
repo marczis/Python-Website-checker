@@ -3,7 +3,6 @@ __author__ = 'marczis'
 
 import argparse
 import sys
-import socket
 import logging
 import socket
 
