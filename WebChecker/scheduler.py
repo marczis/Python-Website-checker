@@ -4,7 +4,7 @@ import asyncore
 import socket
 import cPickle
 import signal
-import os
+import logging
 
 import webpage
 from Config import Config
@@ -44,6 +44,7 @@ class Scheduler(asyncore.dispatcher):
         self.wpc = [] # WebPageCheckers - so the workers registered to this scheduler
         self.wpciter = iter(self.wpc)
         self.remainingseconds = 0
+        self.logonce = True
         signal.alarm(self.period) #Starts the scheduler
 
     def enableScheduler(self):
@@ -53,14 +54,14 @@ class Scheduler(asyncore.dispatcher):
         self.remainingseconds = signal.alarm(0)
 
     def unregisterClient(self, sock):
-        print "Unregister: %s" % (sock)
+        logging.info("Unregister worker: %s:%s" % (sock.getpeername()))
         self.disableScheduler()
         self.wpc.remove(sock) #Should we have a lock here ?
         self.wpciter = iter(self.wpc) #Not optimal, but client registration, should not happen too often
         self.enableScheduler()
 
     def registerClient(self, sock):
-        print "Register: %s" % (sock)
+        logging.info("Register worker: %s:%s" % (sock.getpeername()))
         self.disableScheduler()
         self.wpc.append(sock)
         self.wpciter = iter(self.wpc) #Same thoughts here.
@@ -78,14 +79,17 @@ class Scheduler(asyncore.dispatcher):
         asyncore.loop() # TODO will this ever return ?
 
     def handleTimer(self, signum, frame):
-        print "Scheduler tick"
+        logging.debug("Scheduler tick")
         for i in Config.getsites():
-            print i
+            logging.debug(i)
 
         if not self.wpc:
-            print "No workers connected. Skip iteration."
+            if self.logonce:
+                logging.info("No workers connected.")
+                self.logonce = False
             signal.alarm(self.period)
             return
+        self.logonce = True
 
         for site in Config.getsites():
             if site.shouldSend(): #NOTE: You can call this once and ONLY ONCE, in every scheduler round
@@ -96,7 +100,8 @@ class Scheduler(asyncore.dispatcher):
                     x = self.wpciter.next()
 
                 site.sendMe(x)
-                print "Sent %s to %s" % (site.getName(), x)
+                print x.getpeername()
+                logging.debug("Sent \"%s\" to %s:%s" % (site.getName(), x.getpeername()[0], x.getpeername()[1]))
         signal.alarm(self.period)
 
 

@@ -3,6 +3,7 @@ __author__ = 'marczis'
 import socket
 import cPickle
 import time
+import logging
 
 from Config import Config
 
@@ -11,12 +12,17 @@ class Worker:
         self.scheduler = (Config.get("Networking", "listen_address"), Config.getint("Networking", "port"))
         self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.s.settimeout(Config.getint("Networking", "timeout"))
+        self.logonce = True
 
     def connect(self):
         while [ 1 ]:
             try:
-                print "Try to reconnect..."
+                if self.logonce:
+                    logging.info("Try to reconnect: %s:%s" % self.scheduler)
+                    self.logonce = False
                 self.s.connect(self.scheduler)
+                self.logonce = True
+                logging.info("Connected.")
                 return
             except:
                 time.sleep(Config.getint("Networking", "reconnect_delay"))
