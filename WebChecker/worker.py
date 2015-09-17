@@ -12,9 +12,19 @@ class Worker:
         self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.s.settimeout(Config.getint("Networking", "timeout"))
 
+    def connect(self):
+        while [ 1 ]:
+            try:
+                print "Try to reconnect..."
+                self.s.connect(self.scheduler)
+                return
+            except:
+                time.sleep(Config.getint("Networking", "reconnect_delay"))
+
     def doWork(self):
         data = ""
-        self.s.connect(self.scheduler)
+        self.connect()
+
         while [ 1 ]:
             try:
                 newdata = self.s.recv(8192) # TODO Change to bigger number
@@ -24,14 +34,7 @@ class Worker:
             if not newdata:
                 self.s.close()
                 self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                while [ 1 ]:
-                    try:
-                        print "Try to reconnect..."
-                        self.s.connect(self.scheduler)
-                        break
-                    except:
-                        time.sleep(Config.getint("Networking", "reconnect_delay"))
-                continue
+                self.connect()
 
             data += newdata
             eom = newdata.find(";")

@@ -21,7 +21,7 @@ class Config:
         else:
             self.config.read(CONFIGFILE)
             pagesections = self.config.sections()
-            pagesections.remove("General")
+            #pagesections.remove("General")
             pagesections.remove("Networking")
             pagesections.remove("Scheduler")
 

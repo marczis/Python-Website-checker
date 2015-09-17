@@ -27,13 +27,13 @@ You started the webchecker without proper configuration, a default config file i
 Please check and modify it according to your needs.
 """
 
-#     except socket.error as e:
-#         print """
-# Network problem. If you started the application in server mode, please check the port & address options,
-# plus if you have access rights on the system to open that port.
-# If you started in client mode, please double check the server address and check if you have any
-# blocking firewall or other entity in the way.
-#
-# Low level error message:
-# %s
-# """ % (e)
+    except socket.error as e:
+        print """
+Network problem. If you started the application in server mode, please check the port & address options,
+plus if you have access rights on the system to open that port.
+If you started in client mode, please double check the server address and check if you have any
+blocking firewall or other entity in the way.
+
+Low level error message:
+%s
+""" % (e)
