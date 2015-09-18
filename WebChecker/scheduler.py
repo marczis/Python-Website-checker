@@ -5,31 +5,29 @@ import socket
 import cPickle
 import signal
 import logging
+import asynchat
 
 from Config import Config
 
-class SchedulerHandler(asyncore.dispatcher_with_send):
+class SchedulerHandler(asynchat.async_chat):
     def __init__(self, parent, arg):
-        asyncore.dispatcher_with_send.__init__(self, arg)
+        asynchat.async_chat.__init__(self, sock=arg)
         self.parent = parent
-        self.data = ""
+        self.data = []
+        self.set_terminator("#EOM#")
 
-    def handle_read(self):
-        self.data += self.recv(Config.getint("Networking", "receiver_buffer_size"))
-        eom = self.data.find("\000")
-        if eom == -1:
-            return
+    def collect_incoming_data(self, data):
+        self.data.append(data)
 
-        msg = self.data[0:eom]
-        self.data = self.data[eom+1:]
-
-        x = cPickle.loads(msg)
+    def found_terminator(self):
+        x = cPickle.loads("".join(self.data))
         Config.getsites()[x.getId()].setResult(x)
+        self.data = []
         logging.info("%s: URL: %s Status: %s Loadtime: %.0f ms" % (x.getName(), x.getURL(), x.getStatus(), x.getLoadTime()))
 
     def handle_close(self):
-        self.parent.unregisterClient(self.socket)
-        asyncore.dispatcher_with_send.handle_close(self)
+        self.parent.unregisterClient(self)
+        asynchat.async_chat.handle_close(self)
 
 
 class Scheduler(asyncore.dispatcher):
@@ -53,17 +51,17 @@ class Scheduler(asyncore.dispatcher):
     def disableScheduler(self):
         self.remainingseconds = signal.alarm(0)
 
-    def unregisterClient(self, sock):
-        logging.info("Unregister worker: %s:%s" % (sock.getpeername()))
+    def unregisterClient(self, chat):
+        logging.info("Unregister worker: %s" % (chat))
         self.disableScheduler()
-        self.wpc.remove(sock) #Should we have a lock here ?
+        self.wpc.remove(chat) #Should we have a lock here ?
         self.wpciter = iter(self.wpc) #Not optimal, but client registration, should not happen too often
         self.enableScheduler()
 
-    def registerClient(self, sock):
-        logging.info("Register worker: %s:%s" % (sock.getpeername()))
+    def registerClient(self, chat):
+        logging.info("Register worker: %s" % (chat))
         self.disableScheduler()
-        self.wpc.append(sock)
+        self.wpc.append(chat)
         self.wpciter = iter(self.wpc) #Same thoughts here.
         self.enableScheduler()
     
@@ -72,8 +70,8 @@ class Scheduler(asyncore.dispatcher):
         if pair is not None:
             sock, addr = pair
             # TODO use python logger here
-            self.registerClient(sock)
             handler = SchedulerHandler(self, sock)
+            self.registerClient(handler)
 
     def handleTimer(self, signum, frame):
         logging.debug("Scheduler tick")

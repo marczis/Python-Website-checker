@@ -47,8 +47,8 @@ class WebPage:
             self.status = WebPage.OFFLINE
 
 
-    def sendMe(self, sock):
-        sock.send(cPickle.dumps(self) + "\000")
+    def sendMe(self, chat):
+        chat.push(cPickle.dumps(self) + "#EOM#")
 
     def shouldSend(self):
         from Config import Config

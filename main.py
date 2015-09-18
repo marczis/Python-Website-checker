@@ -41,11 +41,11 @@ def main():
             logging.info("Webchecker started as Scheduler")
             scheduler = WebChecker.scheduler.Scheduler()
             webserver = WebChecker.webserver.WebServer()
-            asyncore.loop()
         else:
             logging.info("Webchecker started as Worker")
             client = WebChecker.worker.Worker()
-            client.doWork() # Endless loop #TODO ADD signal handling so can be stopped
+
+        asyncore.loop()
 
     except Config.MissingConfig:
         logging.error("Started without config.")

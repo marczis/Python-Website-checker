@@ -4,55 +4,37 @@ import socket
 import cPickle
 import time
 import logging
+import asynchat
 
 from Config import Config
-
-class Worker:
+class Worker(asynchat.async_chat):
     def __init__(self):
+        asynchat.async_chat.__init__(self)
+        self.data = []
+        self.logonce = False
+        self.create_socket(socket.AF_INET, socket.SOCK_STREAM)
         self.scheduler = (Config.get("Networking", "listen_address"), Config.getint("Networking", "port"))
-        self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.s.settimeout(Config.getint("Networking", "timeout"))
-        self.logonce = True
+        self.doConnect()
+        self.set_terminator("#EOM#")
 
-    def connect(self):
+    def doConnect(self):
         while [ 1 ]:
             try:
                 if self.logonce:
                     logging.info("Try to reconnect: %s:%s" % self.scheduler)
                     self.logonce = False
-                self.s.connect(self.scheduler)
+                self.connect(self.scheduler)
                 self.logonce = True
                 logging.info("Connected.")
                 return
             except:
                 time.sleep(Config.getint("Networking", "reconnect_delay"))
 
-    def doWork(self):
-        data = ""
-        self.connect()
+    def collect_incoming_data(self, data):
+        self.data.append(data)
 
-        while [ 1 ]:
-            try:
-
-                newdata = self.s.recv(92) # TODO Change to bigger number
-            except socket.timeout as e:
-                continue
-
-            if not newdata:
-                self.s.close()
-                self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                self.connect()
-                data = ""
-
-            data += newdata
-            eom = newdata.find("\000")
-            if eom == -1:
-                continue
-
-            msg = data[0:eom]
-            data = data[eom+1:]
-
-            print msg
-            x = cPickle.loads(msg)
-            x.doCheck()
-            x.sendMe(self.s)
+    def found_terminator(self):
+        x = cPickle.loads("".join(self.data))
+        self.data = []
+        x.doCheck()
+        x.sendMe(self)
