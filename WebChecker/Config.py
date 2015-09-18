@@ -104,6 +104,7 @@ table, th, td {
     border-collapse: collapse;
 }
   </style>
+  <META HTTP-EQUIV="refresh" CONTENT="15">
 </head>
 <body>
 <table border="0">

@@ -11,7 +11,9 @@ circumstances I would do the next things differently:
  - I did not provided a super long documentation (expect this file)
 
 Not implemented:
- - Web interface - UPDATE, I did finished it. By default listen on localhost:8080
+ - Web interface
+   - UPDATE, I did finished it. By default listen on localhost:8080
+   - UPDATE, and the page reloads automatically after 15sec, so you don't have to press F5 rapidly
 
 Changes from requirements:
  - Checking period is not configurable from command line, as I did the period config per website
