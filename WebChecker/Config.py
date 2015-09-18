@@ -58,6 +58,7 @@ class Config:
         self.config.add_section("WebServer")
         self.config.set("WebServer", "listen_address", "localhost")
         self.config.set("WebServer", "port", "8080")
+        self.config.set("WebServer", "page_refresh_delay", "15")
 
         name = "Test Site 1"
         self.config.add_section(name)
@@ -104,7 +105,7 @@ table, th, td {
     border-collapse: collapse;
 }
   </style>
-  <META HTTP-EQUIV="refresh" CONTENT="15">
+  <META HTTP-EQUIV="refresh" CONTENT="%s">
 </head>
 <body>
 <table border="0">
@@ -129,6 +130,6 @@ table, th, td {
 <br>
 </body>
 </html>
-""" % (i.getStatusColor(), i.getName(), i.getURL(), i.getStatus(), i.getLoadTime())
+""" % (Config.get("WebServer", "page_refresh_delay"), i.getStatusColor(), i.getName(), i.getURL(), i.getStatus(), i.getLoadTime())
 
         return res
