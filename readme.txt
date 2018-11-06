@@ -1,3 +1,6 @@
+This a job interview question from many years ago, the task was to create a "pingdom" like tool, to check websites running.
+Here you can find my solution
+
 Hello,
 first of all thanks for the time you spend on my coding challenge, I really appreciate your
 effort. I tried to do a self explaining code, with comments where I found it necessary.
